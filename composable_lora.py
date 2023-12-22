@@ -455,6 +455,7 @@ def lora_Linear_forward(self, input):
         networks.network_reset_cached_weight(self)
     else:
         clear_cache_lora(self, False)
+    
     if (not self.weight.is_cuda) and input.is_cuda: #if variables not on the same device (between cpu and gpu)
         self_weight_cuda = self.weight.to(device=devices.device) #pass to GPU
         to_del = self.weight
@@ -462,6 +463,16 @@ def lora_Linear_forward(self, input):
         del to_del
         del self.weight                       #avoid pytorch 2.0 throwing exception
         self.weight = self_weight_cuda        #load GPU data to self.weight
+
+    if devices.device.type == 'mps': #ensure input and weights both live on mps in the same format
+        input = input.to(device=devices.device, dtype=devices.dtype)
+        self_weight_cuda = self.weight.to(device=devices.device, dtype=devices.dtype) #pass to MPS
+        to_del = self.weight
+        self.weight = None                    #delete CPU variable
+        del to_del
+        del self.weight                       #avoid pytorch 2.0 throwing exception
+        self.weight = self_weight_cuda        #load GPU data to self.weight
+    
     res = torch.nn.Linear_forward_before_lora(self, input)
     res = lora_forward(self, input, res)
     if composable_lycoris.has_webui_lycoris:
@@ -506,6 +517,16 @@ def lora_Conv2d_forward(self, input):
         del to_del
         del self.weight #avoid "cannot assign XXX as parameter YYY (torch.nn.Parameter or None expected)"
         self.weight = self_weight_cuda
+
+    if devices.device.type == 'mps': #ensure input and weights both live on mps in the same format
+        input = input.to(device=devices.device, dtype=devices.dtype)
+        self_weight_cuda = self.weight.to(device=devices.device, dtype=devices.dtype) #pass to MPS
+        to_del = self.weight
+        self.weight = None                    #delete CPU variable
+        del to_del
+        del self.weight                       #avoid pytorch 2.0 throwing exception
+        self.weight = self_weight_cuda        #load GPU data to self.weight
+
     res = torch.nn.Conv2d_forward_before_lora(self, input)
     res = lora_forward(self, input, res)
     if composable_lycoris.has_webui_lycoris:
