@@ -466,12 +466,12 @@ def lora_Linear_forward(self, input):
 
     if devices.device.type == 'mps': #ensure input and weights both live on mps in the same format
         input = input.to(device=devices.device, dtype=devices.dtype)
-        self_weight_cuda = self.weight.to(device=devices.device, dtype=devices.dtype) #pass to MPS
+        self_weight_mps = self.weight.to(device=devices.device, dtype=devices.dtype) #pass to MPS
         to_del = self.weight
         self.weight = None                    #delete CPU variable
         del to_del
         del self.weight                       #avoid pytorch 2.0 throwing exception
-        self.weight = self_weight_cuda        #load GPU data to self.weight
+        self.weight = self_weight_mps        #load GPU data to self.weight
     
     res = torch.nn.Linear_forward_before_lora(self, input)
     res = lora_forward(self, input, res)
@@ -520,12 +520,12 @@ def lora_Conv2d_forward(self, input):
 
     if devices.device.type == 'mps': #ensure input and weights both live on mps in the same format
         input = input.to(device=devices.device, dtype=devices.dtype)
-        self_weight_cuda = self.weight.to(device=devices.device, dtype=devices.dtype) #pass to MPS
+        self_weight_mps = self.weight.to(device=devices.device, dtype=devices.dtype) #pass to MPS
         to_del = self.weight
         self.weight = None                    #delete CPU variable
         del to_del
         del self.weight                       #avoid pytorch 2.0 throwing exception
-        self.weight = self_weight_cuda        #load GPU data to self.weight
+        self.weight = self_weight_mps        #load GPU data to self.weight
 
     res = torch.nn.Conv2d_forward_before_lora(self, input)
     res = lora_forward(self, input, res)
